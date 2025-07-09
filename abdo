@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Webinar Registration</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="form-box">
+    <h2>Register now</h2>
+    <form id="regForm">
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="text" name="surname" placeholder="Surname" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <button type="submit">Next</button>
+    </form>
+    <div class="success" id="successMsg"></div>
+  </div>
+
+  <script>
+    const googleScript = 'YOUR_GOOGLE_SCRIPT_URL';
+    const phpScript = 'save.php';
+    const form = document.getElementById('regForm');
+    const msg = document.getElementById('successMsg');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = new FormData(form);
+
+      fetch(googleScript, { method: 'POST', body: data })
+        .catch(console.error);
+
+      fetch(phpScript, { method: 'POST', body: data })
+        .then(r => r.text())
+        .then(text => {
+          msg.textContent = "🎉 تم التسجيل بنجاح!";
+          form.reset();
+          setTimeout(() => window.location.href = 'thankyou.html', 2000);
+        })
+        .catch(err => {
+          console.error(err);
+          msg.textContent = "❌ حدث خطأ حاول مرة أخرى.";
+        });
+    });
+  </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Thank You</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="thank-box">
+    <h1>🎉 شكراً لتسجيلك!</h1>
+    <p>سيتم التواصل معك قريباً.</p>
+  </div>
+</body>
+</html>
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: #4e54c8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.form-box, .thank-box {
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+}
+input, button {
+  width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 16px;
+}
+.success {
+  color: green;
+}
+
+<?php
+$host = "localhost";
+$db   = "webinar";
+$user = "your_db_user";
+$pass = "your_db_password";
+
+$conn = new mysqli($host, $user, $pass, $db);
+if ($conn->connect_error) die("Connection failed: ".$conn->connect_error);
+
+$name = $_POST['name'];
+$surname = $_POST['surname'];
+$email = $_POST['email'];
+
+$stmt = $conn->prepare("INSERT INTO registrations (name, surname, email) VALUES (?, ?, ?)");
+$stmt->bind_param("sss", $name, $surname, $email);
+$stmt->execute();
+
+echo $stmt->affected_rows > 0 ? "Success" : "Error";
+$stmt->close();
+$conn->close();
+?>
+
+# Webinar Registration Project
+
+## 1. Google Sheets + Apps Script
+- أنشئ Google Sheet وضع رؤوس الأعمدة:
+  `Timestamp | Name | Surname | Email`
+- أضف كود Apps Script كما سبق شرحته.
+- نفّذ أكثر > نشر > Web app.
+- ضع الرابط في `index.html` مكان `YOUR_GOOGLE_SCRIPT_URL`.
+
+## 2. إعداد قاعدة بيانات MySQL
+```sql
+CREATE DATABASE webinar;
+CREATE TABLE registrations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255),
+  surname VARCHAR(255),
+  email VARCHAR(255),
+  reg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
